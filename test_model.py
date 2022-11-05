@@ -4,7 +4,7 @@ from torchsummary import summary
 import torchvision.models.resnet as resnet
 import torch.nn as nn
 import torch.optim as optim
-#from torchvision.models import resnet50, ResNet50_Weights
+from torchvision import models
 
 conv1x1 = resnet.conv1x1
 Bottleneck = resnet.Bottleneck
@@ -13,7 +13,7 @@ BasicBlock = resnet.BasicBlock
 class ResNet(nn.Module):
   def __init__(self, block, layers, num_classes = 1000, zero_init_residual = True):
     super(ResNet, self).__init__()
-    self.inplanes = 32
+    self.inplanes = 32  #inplanes: 64에서 32로 변경
 
     self.conv1 = nn.Sequential(
         nn.Conv2d(3, 32, kernel_size = 7, stride = 2, padding = 3, bias = False),
@@ -27,10 +27,9 @@ class ResNet(nn.Module):
     self.layer3 = self._make_layer(block, 128, layers[2], stride = 2)
     self.layer4 = self._make_layer(block, 256, layers[3], stride = 2)
 
-    self.avgpool = nn.AdaptiveAvgPool2d((1,1))
+    self.avgpool = nn.AdaptiveAvgPool2d((1,1)) 
     self.fc = nn.Linear(256*block.expansion, num_classes)
 
-   #??
     for m in self.modules():
       if isinstance(m, nn.Conv2d):
         nn.init.kaiming_normal_(m.weight, mode = 'fan_out', nonlinearity = 'relu')
@@ -77,7 +76,36 @@ class ResNet(nn.Module):
 def resnet50():
   return ResNet(Bottleneck, [3, 4, 6, 3])
 
+
+#With pretrained model
+class test_Model(nn.Module):
+  def __init__(self):
+    super().__init__()
+    self.pretrained_model = models.resnet50(weights = "IMAGENET1K_V1") #load pretrained model
+    self.pretrained = nn.Sequential(*(list(self.pretrained_model.children())[:-1]))
+    self.extra = nn.Conv2d(2048, 1024, kernel_size = 3, stride = 1, padding = 1, bias = False) #[2048,1,1] --> [1024, 1, 1]
+    
+
+  def forward(self,x):
+    x = self.pretrained(x)
+    x = self.extra(x)
+    return x
+
+def resnet50_pt():
+  return test_Model()
+
+
+
+
 if __name__ == '__main__':
   device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+  #model without pretrained weights
   model = resnet50().to(device)
   summary(model, input_size = (3,256,256), device = device)
+
+  print("\n\n")
+
+  #model with pretrained weights
+  new_model = resnet50_pt().to(device)
+  summary(new_model, input_size = (3,256, 256), device = device)
