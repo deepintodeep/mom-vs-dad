@@ -83,7 +83,7 @@ class My_own_dataset():
         with open(f"{jsondir}", "r") as st_json:
             st_python = json.load(st_json)
         json_length = len(st_python['member'])
-        for idx in range(json_length):
+        for idx in range(json_length): # 여기 나중에 수정해도 됩니다 -> why? 어차피 indiv만 쓸거면 항상 길이=1.
             print( st_python['member'][idx]['regions'][0]['boundingbox'] )
             # print(type(st_python['member'][idx]))
         # print(st_python["family_id"], end="\t")
