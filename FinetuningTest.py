@@ -16,7 +16,7 @@ import torch
 from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from engine import train_one_epoch, evaluate
+from engine import train_one_epoch
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
