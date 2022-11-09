@@ -88,7 +88,8 @@ class FaceDataset(torch.utils.data.Dataset):
 
     def __len__(self):
         # 데이터셋 크기 조절
-        return len(self.list_imgs)
+        #return len(self.list_imgs)
+        return 2000
 
 # collate_fn
 def collate_fn(batch):
