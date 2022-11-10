@@ -53,7 +53,6 @@ def collate_fn(batch):
 
 class Detection():
     def __init__(self):
-
         self.num_classes = 8
         # set model
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -66,6 +65,7 @@ class Detection():
         self.transform = transforms.Compose([
             transforms.ToTensor()
         ])
+
         self.loaded = False
 
 
@@ -129,7 +129,7 @@ class Detection():
         #             'labels' : tensor([]),
         #             'scores' : tensor([]) }]
 
-        return bboxes[0], image
+        return image, bboxes[0]
 
     def predict_val_folder(self):
         root_imgs = os.path.join(os.getcwd(), "data", "validation", "images")
@@ -140,7 +140,7 @@ class Detection():
             image = Image.open(path_imgs).convert("RGB")
 
             image, bboxes = self.predict_one_image(image)
-            plot_image(bboxes, image)
+            plot_image(image, bboxes)
 
 
 if __name__ == '__main__':
