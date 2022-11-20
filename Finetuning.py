@@ -1,5 +1,5 @@
 """
-FinetuningTest.py
+Finetuning.py
 데이터셋 확인용 파이토치 튜토리얼 수정 코드
 1) maskRCNN -> FasterRCNN으로 모델 변경
 2) class 수 7 + 1개로 수정
@@ -156,10 +156,12 @@ if __name__ == '__main__':
     a = int(input("1. train(이어서)\n2. train(새로)\n2. load\n"))
 
     if a == 1:
-        det.train(num_epochs=10, loaded=True)
+        num_epochs, batch_size = map(int,input("epoch batch_size : ").split())
+        det.train(num_epochs=num_epochs, batch_size=batch_size, loaded=True)
 
     if a == 2:
-        det.train(num_epochs=10, loaded=False)
+        num_epochs, batch_size = map(int,input("epoch batch_size : ").split())
+        det.train(num_epochs=num_epochs, batch_size=batch_size, loaded=False)
 
     det.predict_val_folder()
 
