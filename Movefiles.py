@@ -52,7 +52,7 @@ from tqdm import tqdm
 
 
 
-class moveFiles:
+class Movefiles:
     # original zip file path
     _of = os.path.join(os.getcwd(), "01.데이터")
     orig_folder = {"train": {"images": os.path.join(_of, "1.Training/원천데이터"),
@@ -67,7 +67,8 @@ class moveFiles:
                      "val":   {"images": os.path.join(_tf, "validation/images"),
                                "labels": os.path.join(_tf, "validation/labels")}}
 
-    def extract_zip(self, path):
+    @staticmethod
+    def extract_zip(path):
         iddic = {'라벨링데이터' : "labels", '원천데이터' : "images"}
         idx = path.split('/')[-1]
 
@@ -101,7 +102,8 @@ class moveFiles:
                 if filename:
                     zf.extract(filename, tmp_path)
 
-    def move_folder_from_tmp(self, target_folder):
+    @staticmethod
+    def move_folder_from_tmp(target_folder):
         # make target folder
         os.makedirs(target_folder, exist_ok=True)
 
@@ -122,19 +124,21 @@ class moveFiles:
                 nowpath = os.path.join(subdir[i], file)
                 shutil.move(nowpath, target_folder)
 
-    def reconst(self):
+    @classmethod
+    def reconst(cls):
         idx1 = ["train", "val"]
         idx2 = ["images", "labels"]
 
         for i in range(2):
             for j in tqdm(range(2)):
-                self.extract_zip(self.orig_folder[idx1[i]][idx2[j]])
-                self.move_folder_from_tmp(self.target_folder[idx1[i]][idx2[j]])
+                cls.extract_zip(cls.orig_folder[idx1[i]][idx2[j]])
+                cls.move_folder_from_tmp(cls.target_folder[idx1[i]][idx2[j]])
 
         # remove tmp folder
         shutil.rmtree(os.path.join(os.getcwd(), "data", "tmp"))
 
 
 if __name__ == '__main__' :
-    a = moveFiles()
-    a.reconst()
+    com2 = input('''AI Hub에서 다운 받은 데이터셋을 압축을 풀어\nmain.py와 '01.데이터 폴더'가 같은 경로에 오도록 옮겨주세요 ((y)/n)\n''')
+    if not com2 or com2 == 'y' or com2 == 'Y':
+        Movefiles.reconst()

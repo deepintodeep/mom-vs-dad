@@ -20,33 +20,7 @@ from engine import train_one_epoch
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
-def plot_image(img, annotation):
-    for i in annotation.keys():
-        annotation[i] = annotation[i].detach().to("cpu")
 
-    fig, ax = plt.subplots(1)
-    plt.imshow(img.permute(1, 2, 0))
-    checked = [0 for _ in range(8)]
-
-    for idx in range(len(annotation["boxes"])):
-        if checked[annotation["labels"][idx]]:
-            continue
-        else:
-            checked[annotation["labels"][idx]] = 1
-
-        xmin, ymin, xmax, ymax = annotation["boxes"][idx]
-        if annotation['labels'][idx] == 0:
-            rect = patches.Rectangle((xmin, ymin), (xmax - xmin), (ymax - ymin), linewidth=1, edgecolor='r',
-                                     facecolor='none')
-        elif annotation['labels'][idx] == 1:
-            rect = patches.Rectangle((xmin, ymin), (xmax - xmin), (ymax - ymin), linewidth=1, edgecolor='g',
-                                     facecolor='none')
-        else:
-            rect = patches.Rectangle((xmin, ymin), (xmax - xmin), (ymax - ymin), linewidth=1, edgecolor='orange',
-                                     facecolor='none')
-        ax.add_patch(rect)
-
-    plt.show()
 
 def collate_fn(batch):
     return tuple(zip(*batch))
@@ -70,7 +44,11 @@ class Detection():
 
 
     def train(self, batch_size=1, num_epochs=1, lr=0.005,
-                 momentum=0.9, weight_decay=0.0005, step_size=3, gamma=0.1):
+                 momentum=0.9, weight_decay=0.0005, step_size=3, gamma=0.1, loaded= False):
+
+        if loaded == True:
+            self.model.load_state_dict(torch.load('model_weights.pth'))
+            self.loaded = True
 
         # hyperparameters
         self.batch_size = batch_size
@@ -114,6 +92,8 @@ class Detection():
         torch.save(self.model.state_dict(), 'model_weights.pth')
 
 
+
+
     def predict_one_image(self, image): # image : Image.open(path_imgs).convert("RGB")
         if not self.loaded:
             self.model.load_state_dict(torch.load('model_weights.pth'))
@@ -140,15 +120,46 @@ class Detection():
             image = Image.open(path_imgs).convert("RGB")
 
             image, bboxes = self.predict_one_image(image)
-            plot_image(image, bboxes)
+            Detection.plot_image(image, bboxes)
 
+    @staticmethod
+    def plot_image(img, annotation):
+        for i in annotation.keys():
+            annotation[i] = annotation[i].detach().to("cpu")
+
+        fig, ax = plt.subplots(1)
+        plt.imshow(img.permute(1, 2, 0))
+        checked = [0 for _ in range(8)]
+
+        for idx in range(len(annotation["boxes"])):
+            if checked[annotation["labels"][idx]]:
+                continue
+            else:
+                checked[annotation["labels"][idx]] = 1
+
+            xmin, ymin, xmax, ymax = annotation["boxes"][idx]
+            if annotation['labels'][idx] == 0:
+                rect = patches.Rectangle((xmin, ymin), (xmax - xmin), (ymax - ymin), linewidth=1, edgecolor='r',
+                                         facecolor='none')
+            elif annotation['labels'][idx] == 1:
+                rect = patches.Rectangle((xmin, ymin), (xmax - xmin), (ymax - ymin), linewidth=1, edgecolor='g',
+                                         facecolor='none')
+            else:
+                rect = patches.Rectangle((xmin, ymin), (xmax - xmin), (ymax - ymin), linewidth=1, edgecolor='orange',
+                                         facecolor='none')
+            ax.add_patch(rect)
+
+        plt.show()
 
 if __name__ == '__main__':
     det = Detection()
-    a = int(input("1. train\n2. load\n"))
+    a = int(input("1. train(이어서)\n2. train(새로)\n2. load\n"))
 
     if a == 1:
-        det.train(num_epochs=10)
+        det.train(num_epochs=10, loaded=True)
+
+    if a == 2:
+        det.train(num_epochs=10, loaded=False)
 
     det.predict_val_folder()
 
