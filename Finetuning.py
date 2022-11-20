@@ -16,7 +16,7 @@ import torch
 from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from engine import train_one_epoch
+from engine import train_one_epoch, evaluate
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
@@ -43,12 +43,10 @@ class Detection():
         self.loaded = False
 
 
-    def train(self, batch_size=1, num_epochs=1, lr=0.005,
-                 momentum=0.9, weight_decay=0.0005, step_size=3, gamma=0.1, loaded= False):
+    def train(self, batch_size=1, num_epochs=1, lr=0.005, momentum=0.9, weight_decay=0.0005, step_size=3,
+              gamma=0.1, load=False, save_period=1, epoch_checkpoint=None):
 
-        if loaded == True:
-            self.model.load_state_dict(torch.load('model_weights.pth'))
-            self.loaded = True
+
 
         # hyperparameters
         self.batch_size = batch_size
@@ -59,18 +57,25 @@ class Detection():
         self.step_size = step_size
         self.gamma = gamma
 
+        start_epoch = 0
+
         # directory path
         dir_train = os.path.join(os.getcwd(), "data", "train")
         dir_test = os.path.join(os.getcwd(), "data", "validation")
 
         # dataset
         dataset = FaceDataset(dir_train, self.transform)
-        dataset_test = FaceDataset(dir_test, self.transform)
+        # dataset_test = FaceDataset(dir_test, self.transform)
 
         # dataloader
         data_loader = torch.utils.data.DataLoader(
             dataset, batch_size=self.batch_size, shuffle=True, num_workers=4,
             collate_fn=collate_fn)
+
+        # dataloader_test
+        # data_loader_test = torch.utils.data.DataLoader(
+        #     dataset_test, batch_size=self.batch_size, shuffle=True, num_workers=4,
+        #     collate_fn=collate_fn)
 
         # set optimizer
         params = [p for p in self.model.parameters() if p.requires_grad]
@@ -82,14 +87,32 @@ class Detection():
                                                        step_size=self.step_size,
                                                        gamma=self.gamma)
 
+        # load saved model
+        if load == True:
+            self.loaded = True
+            checkpoint = torch.load('checkpoint_epoch_'+str(epoch_checkpoint)+'.pth')
+
+            self.model.load_state_dict(checkpoint['model_state_dict'])
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            lr_scheduler.load_state_dict(checkpoint['lr_scheduler_state_dict'])
+            start_epoch = checkpoint['epoch']
+
+
         # train
-        for epoch in range(self.num_epochs):
-            # 10회 마다 출력
-            train_one_epoch(self.model, optimizer, data_loader, self.device, epoch, print_freq=10)
+        for epoch in range(start_epoch+1, self.num_epochs+1):
+            # 100회 마다 출력
+            train_one_epoch(self.model, optimizer, data_loader, self.device, epoch, print_freq=100)
             # lr update
             lr_scheduler.step()
+            # evaluate(self.model, data_loader_test, device=self.device)
 
-        torch.save(self.model.state_dict(), 'model_weights.pth')
+            if epoch % save_period == 0:
+                torch.save({
+                    'model_state_dict': self.model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    'lr_scheduler_state_dict': lr_scheduler.state_dict(),
+                    'epoch': epoch},
+                    'checkpoint_epoch_'+str(epoch)+'.pth')
 
 
 
@@ -156,12 +179,13 @@ if __name__ == '__main__':
     a = int(input("1. train(이어서)\n2. train(새로)\n3. load\n"))
 
     if a == 1:
-        num_epochs, batch_size = map(int,input("epoch batch_size : ").split())
-        det.train(num_epochs=num_epochs, batch_size=batch_size, loaded=True)
+        epoch_checkpoint = int(input("불러올 모델의 epoch: "))
+        num_epochs, batch_size, save_period = map(int,input("epoch batch_size save_period: ").split())
+        det.train(num_epochs=num_epochs, batch_size=batch_size, epoch_checkpoint=epoch_checkpoint, load=True)
 
     elif a == 2:
-        num_epochs, batch_size = map(int,input("epoch batch_size : ").split())
-        det.train(num_epochs=num_epochs, batch_size=batch_size, loaded=False)
+        num_epochs, batch_size, save_period = map(int,input("epoch batch_size save_period: ").split())
+        det.train(num_epochs=num_epochs, batch_size=batch_size, load=False)
 
     det.predict_val_folder()
 

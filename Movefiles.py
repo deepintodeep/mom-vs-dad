@@ -124,6 +124,40 @@ class Movefiles:
                 nowpath = os.path.join(subdir[i], file)
                 shutil.move(nowpath, target_folder)
 
+    @staticmethod
+    def islabelimgexist(folder):
+        img = sorted(os.listdir(os.path.join(os.getcwd(), "data", "train", "images")))
+        label = sorted(os.listdir(os.path.join(os.getcwd(), "data", "train", "labels")))
+
+        img = [i.split('.')[0] for i in img]
+        label = [i.split('.')[0] for i in label]
+
+        for i in img:
+            if i not in label:
+                print(os.path.join(os.getcwd(), "data", folder, "labels", i + ".json"))
+                try:
+                    print(os.path.join(os.getcwd(), "data", folder, "labels", i+".json"))
+                    os.remove(os.path.join(os.getcwd(), "data", folder, "labels", i+".json"))
+                    print("delected")
+                except:
+                    try:
+                        os.remove(os.path.join(os.getcwd(), "data", folder, "images", i + ".jpg"))
+                        print("delected")
+                    except:
+                        pass
+        for j in label:
+            if j not in img:
+                print(os.path.join(os.getcwd(), "data", folder, "labels", j + ".json"))
+                try:
+                    os.remove(os.path.join(os.getcwd(), "data", folder, "labels", j+".json"))
+                    print("delected")
+                except:
+                    try:
+                        os.remove(os.path.join(os.getcwd(), "data", folder, "images", j + ".jpg"))
+                        print("delected")
+                    except:
+                        pass
+
     @classmethod
     def reconst(cls):
         idx1 = ["train", "val"]
@@ -132,7 +166,7 @@ class Movefiles:
         for i in range(2):
             for j in tqdm(range(2)):
                 cls.extract_zip(cls.orig_folder[idx1[i]][idx2[j]])
-                cls.move_folder_from_tmp(cls.target_folder[idx1[i]][idx2[j]])
+                cls.move_folder_from_tmp(cls.target_folder[idx1[0]][idx2[j]])
 
         # remove tmp folder
         shutil.rmtree(os.path.join(os.getcwd(), "data", "tmp"))
@@ -142,3 +176,11 @@ if __name__ == '__main__' :
     com2 = input('''AI Hub에서 다운 받은 데이터셋을 \nMovefiles.py와 '01.데이터 폴더'가 같은 경로에 오도록 옮겨주세요 ((y)/n)\n''')
     if not com2 or com2 == 'y' or com2 == 'Y':
         Movefiles.reconst()
+
+    Movefiles.islabelimgexist("train")
+    Movefiles.islabelimgexist("validation")
+
+
+
+
+
