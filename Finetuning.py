@@ -153,13 +153,13 @@ class Detection():
 
 if __name__ == '__main__':
     det = Detection()
-    a = int(input("1. train(이어서)\n2. train(새로)\n2. load\n"))
+    a = int(input("1. train(이어서)\n2. train(새로)\n3. load\n"))
 
     if a == 1:
         num_epochs, batch_size = map(int,input("epoch batch_size : ").split())
         det.train(num_epochs=num_epochs, batch_size=batch_size, loaded=True)
 
-    if a == 2:
+    elif a == 2:
         num_epochs, batch_size = map(int,input("epoch batch_size : ").split())
         det.train(num_epochs=num_epochs, batch_size=batch_size, loaded=False)
 

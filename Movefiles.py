@@ -139,6 +139,6 @@ class Movefiles:
 
 
 if __name__ == '__main__' :
-    com2 = input('''AI Hub에서 다운 받은 데이터셋을 압축을 풀어\nmain.py와 '01.데이터 폴더'가 같은 경로에 오도록 옮겨주세요 ((y)/n)\n''')
+    com2 = input('''AI Hub에서 다운 받은 데이터셋을 \nMovefiles.py와 '01.데이터 폴더'가 같은 경로에 오도록 옮겨주세요 ((y)/n)\n''')
     if not com2 or com2 == 'y' or com2 == 'Y':
         Movefiles.reconst()
