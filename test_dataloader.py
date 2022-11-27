@@ -18,14 +18,14 @@ class My_own_dataset():
         self.train = train
         self.transform = transform
         self.resize_factor = resize
-        # torchvision/data/sample/F0350/A(친가)/1.Family
-        self.dir_path = "../data/sample/" # = self.root
+        self.dir_path = "./data/sample" # = self.root
         #self.family_ids = ["F0350", "F0351", "F0352"]
-        self.family_ids = os.listdir( f'{self.dir_path}' )[1:]
-        # print(self.family_ids)
+        self.family_ids = sorted(os.listdir( f'{self.dir_path}' )[1:])
+        
         self.AorB = ( "A(친가)", "B(외가)" ) #paternal part, maternal part 
-        self.relations = ("1.Family", "2.Individuals", "3.Age")
-        self.pathes = [ f"{self.dir_path}{family_ids_}/{AorB_}/{relations_}" \
+        # self.relations = ("1.Family", "2.Individuals", "3.Age")
+        self.relations = ("2.Individuals") # individual만 사용할 것임.
+        self.pathes = [ f"{self.dir_path}/{family_ids_}/{AorB_}/2.Individuals" \
             for family_ids_ in self.family_ids for AorB_ in self.AorB for relations_ in self.relations ]
         
         self.images = [] # element format: ("image.jpg", "json_file") or "image.jpg"
@@ -44,41 +44,55 @@ class My_own_dataset():
         self.images.sort()
         self.json.sort()
         self.imgAndJson = list(zip(self.images, self.json))
-        # print(len(self.imgAndJson))
-        # print(len(self.imgAndJson[0]))
-        # pprint(self.imgAndJson)
 
         
     def __len__(self):
         return len(self.images)
     
-    def __getitem__(self, index):
-        # 나중엔 바운딩 박스 모양으로 사진 잘라야됨 
-        # return -> 총 image tensor 7개, family_id 1개 있게됨.
-        raw_img = ( Image.open(self.imgAndJson[index][0]).convert('RGB') ).resize((224,224)) # tuple json
-        # print(self.images[index])
-        print(self.imgAndJson[index][1])
+    def __getitem__(self, index) -> tuple(list, str):
+        # raw_img = ( Image.open(self.imgAndJson[index][0]).convert('RGB') ).resize((224,224)) # tuple json
+        # print('name:', self.imgAndJson[index][0])
+        raw_img = ( Image.open(self.imgAndJson[index][0]).convert('RGB') )
+        
         with open(self.imgAndJson[index][1], "r") as st_json:
             st_python = json.load(st_json)
-            json_length = len(st_python['member'])
-            for idx in range(json_length):
-                # print( st_python['member'][idx]['regions'][0]['boundingbox'] )
-                pass
+            family_id = st_python["family_id"]
+            bounding = st_python['member'][0]['regions'][0]['boundingbox']
         
-        raw_img.show() 
-        raw_img_transform = transforms.Compose( [transforms.PILToTensor(), transforms.Resize((224,224))] )
-        raw_img = torch.divide( raw_img_transform(raw_img), 255 )
+        # transform func
+        raw_img_transform = transforms.Compose( [transforms.PILToTensor(), transforms.Resize((256,256))] )
         
+        # croping start
+        crop_list = []
+        for idx in range(7):
+            x = int(bounding[idx]['x']) # 각 bounding box에서의 좌표들
+            y = int(bounding[idx]['y'])
+            w = int(bounding[idx]['w'])
+            h = int(bounding[idx]['h'])
+            crop = raw_img.crop((x,y,x+w,y+h))
+            # crop.show() # for testing.
+            crop = torch.divide( raw_img_transform(crop), 255)
+            crop_list.append(crop)
+            
+        return crop_list, family_id # tuple([7 of tensors], family_id)
         # if self.transform is not None:
         #     img = self.transform(img)
+
         
-        # return ( 7 of tensors, family_id )
+    def json_parsing(self, jsondir):
+        with open(f"{jsondir}", "r") as st_json:
+            st_python = json.load(st_json)
+        json_length = len(st_python['member'])
+        for idx in range(json_length): # 여기 나중에 수정해도 됩니다 -> why? 어차피 indiv만 쓸거면 항상 길이=1.
+            print( st_python['member'][idx]['regions'][0]['boundingbox'] )
+            # print(type(st_python['member'][idx]))
+        # print(st_python["family_id"], end="\t")
+        # print(st_python["member"]["boundingbox"])
         
-    def json_parsing():
-        pass
 if __name__ == '__main__':
     instance = My_own_dataset("../data/sample/", transform=transforms.ToTensor())
-    instance.__getitem__(0)
+    print(instance.__getitem__(0))
     # print(instance.__getitem__(0).size()) # return 넣으면 풀기
-    print(instance.__len__())
+    print('instance len:',instance.__len__())
+    
     
