@@ -10,15 +10,18 @@ class SimilarityNet(nn.Module):
 
         for _ in range(n_images):
             network = resnet18(ResNet18_Weights.IMAGENET1K_V1)
-            network.fc = nn.Linear(512, 128)
+            network.fc = nn.Linear(512, 64)
             self.networks.append(network)
         
     def forward(self, inputs):
-        outputs = []
+        outputs = None
         for i in range(self.n_images):
             output = self.networks[i](inputs[:, i])
-            outputs.append(output)
-        outputs = torch.cat(outputs, dim=1)
+
+            if outputs is None:
+                outputs = output
+            else:
+                outputs = torch.cat([outputs, output], dim=1)
         return outputs
 
 # net = resnet18(ResNet18_Weights.IMAGENET1K_V1)
@@ -28,9 +31,3 @@ class SimilarityNet(nn.Module):
 # print(input.shape)
 # outputs = net(input)
 # print(outputs.shape)
-
-net = SimilarityNet()
-
-inputs = torch.ones(4, 7, 3, 256, 256)
-outputs = net(inputs)
-print(outputs.shape)
